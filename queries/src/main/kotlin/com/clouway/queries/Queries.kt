@@ -6,14 +6,11 @@ import java.sql.DriverManager
 import java.sql.ResultSet
 import java.util.*
 
-class Queries(val server: String, val port: Int, val db: String, val username: String, val password: String) {
-
-    private val con: Connection = DriverManager.getConnection("jdbc:mysql://$server:$port/$db", username, password)
-    private val statement = con.createStatement()
+class Queries(val con: Connection) {
 
     fun select(table: String, where: String?, like: String?,
                vararg columns: String = Array<String>(1) { "*" }): ResultSet {
-        return statement.executeQuery("select ${columns.find { it == "*" } ?:
+        return con.createStatement().executeQuery("select ${columns.find { it == "*" } ?:
                 columns.joinToString(", ")} " +
                 "FROM $table ${if (where == null) "" else "WHERE $where ${like ?: ""}"}")
     }
@@ -32,11 +29,11 @@ class Queries(val server: String, val port: Int, val db: String, val username: S
                 set += ", "
             }
         }
-        return statement.execute("update $table SET $set ${if (where == null) "" else "WHERE $where"}")
+        return con.createStatement().execute("update $table SET $set ${if (where == null) "" else "WHERE $where"}")
     }
 
     fun delete(table: String, where: String): Boolean {
-        return statement.execute("delete FROM $table WHERE $where")
+        return con.createStatement().execute("delete FROM $table WHERE $where")
     }
 
     fun insert(table: String, values: List<String>, columns: List<String> = listOf()): Boolean {
@@ -48,26 +45,26 @@ class Queries(val server: String, val port: Int, val db: String, val username: S
         }
         var quotedValues = ArrayList<String>()
         values.forEach { quotedValues.add("\"$it\"") }
-        return statement.execute("insert INTO $table ${if (columns.size == 0) "" else
+        return con.createStatement().execute("insert INTO $table ${if (columns.size == 0) "" else
             "(${columns.joinToString(", ")})"} VALUES (${quotedValues.joinToString(", ")})")
     }
 
     fun drop(table: String): Boolean {
-        return statement.execute("drop TABLE $table")
+        return con.createStatement().execute("drop TABLE $table")
     }
 
     fun alter(table: String, operation: Operation, column: String, options: String = ""): Boolean {
-        return statement.execute("alter TABLE $table $operation $column " +
+        return con.createStatement().execute("alter TABLE $table $operation $column " +
                 if (operation != Operation.DROP) options else "")
     }
 
     fun customScript(script: String): Boolean {
-        return statement.execute(script)
+        return con.createStatement().execute(script)
     }
 }
 
 fun main(args: Array<String>) {
-    val queries = Queries("127.0.0.1", 3306, "testdb", "root", "1234")
+    val queries = Queries(DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/testdb", "root", "1234"))
     queries.customScript(FileReader("schema/schema.sql").readText())//  Creates new table Persons
 
     println("Insert some entries")
@@ -92,19 +89,17 @@ fun main(args: Array<String>) {
     queries.drop("Persons")
 }
 
-private fun resultToString(result: ResultSet):String {
+private fun resultToString(result: ResultSet): List<Map<String, String>> {
     val rsmd = result.getMetaData()
     val columnsNumber = rsmd.getColumnCount()
-    var output = ""
+    var output = ArrayList<Map<String, String>>()
     while (result.next()) {
+        val map = HashMap<String, String>()
         for (i in 1..columnsNumber) {
-            if (i > 1){
-                output += ",  "
-            }
             val columnValue = result.getString(i)
-            output += rsmd.getColumnName(i) + ": " + columnValue
+            map.put(rsmd.getColumnName(i), columnValue)
         }
-        output += "\n"
+        output.add(map)
     }
     return output
 }
