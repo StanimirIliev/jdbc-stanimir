@@ -1,11 +1,17 @@
-package com.clouway.trip
+package com.clouway.trip.adapter.jdbc
 
+import com.clouway.trip.Customer
+import com.clouway.trip.Trip
+import com.clouway.trip.core.TourAgency
 import java.sql.Connection
 import java.time.LocalDate
 
-class TourManagement(val con: Connection, private val customerTable: String, private val tripTable: String) {
+class JdbcTourAgency(val con: Connection, private val customerTable: String, private val tripTable: String) : TourAgency {
 
-    fun newTrip(customerId: Long, town: String, arriveDate: LocalDate, leaveDate: LocalDate): Trip {
+    override fun registerTrip(customerId: Long, town: String, arriveDate: LocalDate, leaveDate: LocalDate): Trip? {
+        if(!JdbcCustomerRepository(con, customerTable).isRegistered(customerId)){
+            return null
+        }
         val statement = con.createStatement()
         statement.execute("INSERT INTO $tripTable(CustomerId, ArriveDate, LeaveDate, Town) VALUES(" +
                 "(SELECT PersonalID FROM $customerTable WHERE PersonalId=$customerId)," +
@@ -17,17 +23,7 @@ class TourManagement(val con: Connection, private val customerTable: String, pri
         return Trip(result.getInt("TripId"), town, arriveDate, leaveDate)
     }
 
-    fun newCustomer(customer: Customer) {
-        val statement = con.createStatement()
-        statement.execute("INSERT INTO Customers VALUES('${customer.name}', ${customer.id}, ${customer.age}, " +
-                "'${customer.email}')")
-    }
-
-    fun updateTrip(trip: Trip, leaveDate: LocalDate = trip.leaveDate,
-                   arriveDate: LocalDate = trip.arriveDate, town: String = trip.town) {
-        if (trip.leaveDate == leaveDate && trip.arriveDate == arriveDate && trip.town == town) {
-            return//   Nothing to update
-        }
+    override fun updateTrip(trip: Trip, leaveDate: LocalDate, arriveDate: LocalDate, town: String) {
         trip.town = town
         trip.leaveDate = leaveDate
         trip.arriveDate = arriveDate
@@ -36,21 +32,7 @@ class TourManagement(val con: Connection, private val customerTable: String, pri
                 "WHERE TripId=${trip.tripId}")
     }
 
-    fun updateCustomer(customer: Customer, name: String = customer.name, id: Long = customer.id,
-                       age: Int = customer.age, email: String = customer.email) {
-        if (name == customer.name && id == customer.id && age == customer.age && email == customer.email) {
-            return// There is nothing to update
-        }
-        customer.name = name
-        customer.id = id
-        customer.age = age
-        customer.email = email
-        val statement = con.createStatement()
-        statement.execute("UPDATE $customerTable SET Name='$name',PersonalId=$id,Age=$age,Email='$email' " +
-                "WHERE PersonalId=${customer.id}")
-    }
-
-    fun getTrips(): List<Trip> {
+    override fun getTrips(): List<Trip> {
         val list = ArrayList<Trip>()
         val statement = con.createStatement()
         val result = statement.executeQuery("SELECT * FROM $tripTable")
@@ -63,7 +45,7 @@ class TourManagement(val con: Connection, private val customerTable: String, pri
         return list
     }
 
-    fun getCustomers(): List<Customer> {
+    override fun getCustomers(): List<Customer> {
         val list = ArrayList<Customer>()
         val statement = con.createStatement()
         val result = statement.executeQuery("SELECT * FROM $customerTable")
@@ -75,7 +57,7 @@ class TourManagement(val con: Connection, private val customerTable: String, pri
         return list
     }
 
-    fun getCustomersWithPrefixInName(prefix: String): List<Customer> {
+    override fun getCustomersWithPrefixInName(prefix: String): List<Customer> {
         val list = ArrayList<Customer>()
         val statement = con.createStatement()
         val result = statement.executeQuery("SELECT * FROM $customerTable WHERE Name LIKE '$prefix%'")
@@ -92,7 +74,7 @@ class TourManagement(val con: Connection, private val customerTable: String, pri
      * Key -> Name of the town: String
      * Value -> customers that has been there at the same time: List<Costumer>
      */
-    fun getMatchingCustomers(): Map<String, List<Customer>> {
+    override fun getMatchingCustomers(): Map<String, List<Customer>> {
 
         val statement = con.createStatement()
         val output = LinkedHashMap<String, List<Customer>>()
@@ -145,23 +127,13 @@ class TourManagement(val con: Connection, private val customerTable: String, pri
      * Returns list with most visited cities in ascending order
      * return List<String>
      */
-    fun getMostVisitedCities(): List<String> {
+    override fun getMostVisitedCities(): List<String> {
         val output = ArrayList<String>()
         val statement = con.createStatement()
         val result = statement.executeQuery("SELECT Town FROM Trips GROUP BY Town ORDER BY COUNT(TripId)")
-        while(result.next()) {
+        while (result.next()) {
             output.add(result.getString("Town"))
         }
         return output
-    }
-
-    fun clearTable(table: Table) {
-        val statement = con.createStatement()
-        if(table == Table.Trips) {
-            statement.execute("TRUNCATE TABLE $tripTable")
-        }
-        else {
-            statement.execute("DELETE FROM $customerTable")
-        }
     }
 }
