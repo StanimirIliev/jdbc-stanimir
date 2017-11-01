@@ -1,0 +1,12 @@
+CREATE TABLE Trips(
+    TripId INT NOT NULL AUTO_INCREMENT UNIQUE,
+    ArriveDate DATE NOT NULL,
+    LeaveDate DATE NOT NULL,
+    Town VARCHAR(255) NOT NULL,
+    CustomerId BIGINT UNSIGNED NOT NULL,
+    PRIMARY KEY(TripId),
+    FOREIGN KEY(CustomerId)
+    REFERENCES Customers(PersonalId)
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
+);
