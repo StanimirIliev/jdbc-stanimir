@@ -1,0 +1,14 @@
+CREATE TABLE Contacts(
+    Name VARCHAR(255) NOT NULL,
+    UserId INT NOT NULL UNIQUE,
+    AddressId INT,
+    PRIMARY KEY(Name),
+    FOREIGN KEY(UserId)
+    REFERENCES Users(Id)
+    ON UPDATE CASCADE
+    ON DELETE CASCADE,
+    FOREIGN KEY(AddressId)
+    REFERENCES Addresses(Id)
+    ON UPDATE CASCADE
+    ON DELETE SET NULL
+)
