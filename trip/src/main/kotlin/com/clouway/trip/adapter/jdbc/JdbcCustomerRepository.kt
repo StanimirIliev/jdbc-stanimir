@@ -1,6 +1,6 @@
 package com.clouway.trip.adapter.jdbc
 
-import com.clouway.trip.Customer
+import com.clouway.trip.core.Customer
 import com.clouway.trip.core.CustomerRepository
 import java.sql.Connection
 

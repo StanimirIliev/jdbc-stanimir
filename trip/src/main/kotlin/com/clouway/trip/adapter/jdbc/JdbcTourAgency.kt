@@ -1,8 +1,7 @@
 package com.clouway.trip.adapter.jdbc
 
-import com.clouway.trip.core.CustomerRepository
-import com.clouway.trip.Customer
-import com.clouway.trip.Trip
+import com.clouway.trip.core.Customer
+import com.clouway.trip.core.Trip
 import com.clouway.trip.core.TourAgency
 import java.sql.Connection
 import java.time.LocalDate

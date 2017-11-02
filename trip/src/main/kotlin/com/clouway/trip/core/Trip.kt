@@ -1,4 +1,4 @@
-package com.clouway.trip
+package com.clouway.trip.core
 
 import java.time.LocalDate
 

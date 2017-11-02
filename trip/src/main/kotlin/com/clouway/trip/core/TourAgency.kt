@@ -1,7 +1,5 @@
 package com.clouway.trip.core
 
-import com.clouway.trip.Customer
-import com.clouway.trip.Trip
 import java.time.LocalDate
 
 interface TourAgency {
