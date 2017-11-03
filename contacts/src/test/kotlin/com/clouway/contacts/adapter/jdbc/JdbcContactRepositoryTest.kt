@@ -31,58 +31,49 @@ class JdbcContactRepositoryTest {
     }
 
     @Test
-    fun tryToGetUnregisteredContact() {
+    fun tryToGetUnregisteredContactByName() {
         assertThat(contactRepo.getByName("Gosho"), `is`(nullValue()))
     }
 
     @Test
-    fun GetRegisteredContactByName() {
-        val user1 = User(1, "Georgi", "Vasilev", 20)
-        val user2 = User(2, "Velizar", "Vasilev", 19)
-        userRepo.register(user1)
-        userRepo.register(user2)
-        val address = Address(1, "Vidima", 17, "Gabrovo")
-        addressRepo.register(address)
+    fun tryToGetUnregisteredContactById() {
+        assertThat(contactRepo.getByUserId(1), `is`(nullValue()))
+    }
+
+    @Test
+    fun getRegisteredContactByName() {
+        userRepo.register(User(1, "Georgi", "Vasilev", 20))
+        addressRepo.register(Address(1, "Vidima", 17, "Gabrovo"))
         val contact1 = Contact("Gosho", 1, 1)
-        val contact2 = Contact("Velizar", 2, 1)
         contactRepo.register(contact1)
-        contactRepo.register(contact2)
         assertThat(contactRepo.getByName("Gosho"), `is`(equalTo(contact1)))
     }
 
     @Test
     fun getRegisteredContactByUserId() {
-        val user1 = User(1, "Georgi", "Vasilev", 20)
-        val user2 = User(2, "Velizar", "Vasilev", 19)
-        userRepo.register(user1)
-        userRepo.register(user2)
-        val address = Address(1, "Vidima", 17, "Gabrovo")
-        addressRepo.register(address)
-        val contact1 = Contact("Gosho", 1, 1)
-        val contact2 = Contact("Velizar", 2, 1)
-        contactRepo.register(contact1)
-        contactRepo.register(contact2)
-        assertThat(contactRepo.getByUserId(1), `is`(equalTo(contact1)))
+        userRepo.register(User(1, "Georgi", "Vasilev", 20))
+        addressRepo.register(Address(1, "Vidima", 17, "Gabrovo"))
+        val contact = Contact("Gosho", 1, 1)
+        contactRepo.register(contact)
+        assertThat(contactRepo.getByUserId(1), `is`(equalTo(contact)))
     }
 
     @Test
     fun getRegisteredContactsByAddressId() {
-        val user1 = User(1, "Georgi", "Vasilev", 20)
-        val user2 = User(2, "Velizar", "Vasilev", 19)
-        val user3 = User(3, "Stanimir", "Iliev", 20)
-        userRepo.register(user1)
-        userRepo.register(user2)
-        userRepo.register(user3)
-        val address1 = Address(1, "Vidima", 17, "Gabrovo")
-        val address2 = Address(2, "Zelena Livada", 30, "Gabrovo")
-        addressRepo.register(address1)
-        addressRepo.register(address2)
+        pretendThatRepositoryContainsUsers(
+                User(1, "Georgi", "Vasilev", 20),
+                User(2, "Velizar", "Vasilev", 19),
+                User(3, "Stanimir", "Iliev", 20)
+        )
+        pretendThatRepositoryContainsAddresses(
+                Address(1, "Vidima", 17, "Gabrovo"),
+                Address(2, "Zelena Livada", 30, "Gabrovo")
+        )
         val contact1 = Contact("Gosho", 1, 1)
         val contact2 = Contact("Velizar", 2, 1)
-        val contact3 = Contact("Stanimir", 3, 2)
-        contactRepo.register(contact1)
-        contactRepo.register(contact2)
-        contactRepo.register(contact3)
+        pretendThatRepositoryContainsContacts(
+                contact1, contact2, Contact("Stanimir", 3, 2)
+        )
         assertThat(contactRepo.getByAddressId(1), `is`(equalTo(listOf(contact1, contact2))))
     }
 
@@ -90,20 +81,18 @@ class JdbcContactRepositoryTest {
     fun getAllRegisteredUsersAtTheSameTown() {
         val user1 = User(1, "Georgi", "Vasilev", 20)
         val user2 = User(2, "Velizar", "Vasilev", 19)
-        val user3 = User(3, "Stanimir", "Iliev", 20)
-        userRepo.register(user1)
-        userRepo.register(user2)
-        userRepo.register(user3)
-        val address1 = Address(1, "Vidima", 17, "Gabrovo")
-        val address2 = Address(2, "Zelena Livada", 30, "Veliko Tarnovo")
-        addressRepo.register(address1)
-        addressRepo.register(address2)
-        val contact1 = Contact("Gosho", 1, 1)
-        val contact2 = Contact("Velizar", 2, 1)
-        val contact3 = Contact("Stanimir", 3, 2)
-        contactRepo.register(contact1)
-        contactRepo.register(contact2)
-        contactRepo.register(contact3)
+        pretendThatRepositoryContainsUsers(
+                user1, user2, User(3, "Stanimir", "Iliev", 20)
+        )
+        pretendThatRepositoryContainsAddresses(
+                Address(1, "Vidima", 17, "Gabrovo"),
+                Address(2, "Zelena Livada", 30, "Veliko Tarnovo")
+        )
+        pretendThatRepositoryContainsContacts(
+                Contact("Gosho", 1, 1),
+                Contact("Velizar", 2, 1),
+                Contact("Stanimir", 3, 2)
+        )
         assertThat(contactRepo.getAllUsersAt("Gabrovo"), `is`(equalTo(listOf(user1, user2))))
     }
 
@@ -111,20 +100,18 @@ class JdbcContactRepositoryTest {
     fun getAllRegisteredUsersAtTheSameTownAndTheSameStreet() {
         val user1 = User(1, "Georgi", "Vasilev", 20)
         val user2 = User(2, "Velizar", "Vasilev", 19)
-        val user3 = User(3, "Stanimir", "Iliev", 20)
-        userRepo.register(user1)
-        userRepo.register(user2)
-        userRepo.register(user3)
-        val address1 = Address(1, "Vidima", 17, "Gabrovo")
-        val address2 = Address(2, "Zelena Livada", 30, "Gabrovo")
-        addressRepo.register(address1)
-        addressRepo.register(address2)
-        val contact1 = Contact("Gosho", 1, 1)
-        val contact2 = Contact("Velizar", 2, 1)
-        val contact3 = Contact("Stanimir", 3, 2)
-        contactRepo.register(contact1)
-        contactRepo.register(contact2)
-        contactRepo.register(contact3)
+        pretendThatRepositoryContainsUsers(
+                user1, user2, User(3, "Stanimir", "Iliev", 20)
+        )
+        pretendThatRepositoryContainsAddresses(
+                Address(1, "Vidima", 17, "Gabrovo"),
+                Address(2, "Zelena Livada", 30, "Gabrovo")
+        )
+        pretendThatRepositoryContainsContacts(
+                Contact("Gosho", 1, 1),
+                Contact("Velizar", 2, 1),
+                Contact("Stanimir", 3, 2)
+        )
         assertThat(contactRepo.getAllUsersAt("Gabrovo", "Vidima"), `is`(equalTo(listOf(user1, user2))))
     }
 
@@ -132,20 +119,33 @@ class JdbcContactRepositoryTest {
     fun getAllRegisteredUsersAtTheSameAddress() {
         val user1 = User(1, "Georgi", "Vasilev", 20)
         val user2 = User(2, "Velizar", "Vasilev", 19)
-        val user3 = User(3, "Stanimir", "Iliev", 20)
-        userRepo.register(user1)
-        userRepo.register(user2)
-        userRepo.register(user3)
-        val address1 = Address(1, "Vidima", 17, "Gabrovo")
-        val address2 = Address(2, "Vidima", 30, "Gabrovo")
-        addressRepo.register(address1)
-        addressRepo.register(address2)
-        val contact1 = Contact("Gosho", 1, 1)
-        val contact2 = Contact("Velizar", 2, 1)
-        val contact3 = Contact("Stanimir", 3, 2)
-        contactRepo.register(contact1)
-        contactRepo.register(contact2)
-        contactRepo.register(contact3)
+        pretendThatRepositoryContainsUsers(
+                user1, user2, User(3, "Stanimir", "Iliev", 20))
+        pretendThatRepositoryContainsAddresses(
+                Address(1, "Vidima", 17, "Gabrovo"),
+                Address(2, "Vidima", 30, "Gabrovo"))
+        pretendThatRepositoryContainsContacts(
+                Contact("Gosho", 1, 1),
+                Contact("Velizar", 2, 1),
+                Contact("Stanimir", 3, 2))
         assertThat(contactRepo.getAllUsersAt("Gabrovo", "Vidima", 17), `is`(equalTo(listOf(user1, user2))))
+    }
+
+    private fun pretendThatRepositoryContainsUsers(vararg users: User) {
+        for(user in users) {
+            userRepo.register(user)
+        }
+    }
+
+    private fun pretendThatRepositoryContainsAddresses(vararg addresses: Address) {
+        for(address in addresses) {
+            addressRepo.register(address)
+        }
+    }
+
+    private fun pretendThatRepositoryContainsContacts(vararg contacts: Contact) {
+        for(contact in contacts) {
+            contactRepo.register(contact)
+        }
     }
 }
