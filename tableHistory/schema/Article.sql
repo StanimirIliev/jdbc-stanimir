@@ -1,0 +1,8 @@
+CREATE TABLE Articles(
+    Id INT NOT NULL AUTO_INCREMENT,
+    Description VARCHAR(255) NOT NULL,
+    Unit ENUM('KILOGRAM', 'METER', 'PIECE', 'PACKET') NOT NULL,
+    Price FLOAT NOT NULL,
+    Availability FLOAT NOT NULL,
+    PRIMARY KEY(Id)
+)
